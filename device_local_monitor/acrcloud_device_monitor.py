@@ -190,7 +190,12 @@ class MonitorProcess(multiprocessing.Process):
                     'open_timeout_sec':self._open_timeout,
                     'read_timeout_sec':self._download_timeout,
                     'is_debug':1,
+                    'extra_opt': {}
                 }
+                for ik,iv in self._config['config']['device'].items():
+                    if iv != 0:
+                        acrdict['extra_opt'][ik] = str(iv)
+                        self._logger.info('device value -- ' + ik + ': ' + str(iv))
                 code, msg, ffcode, ffmsg = acrcloud_stream_decode.decode_audio(acrdict)
 
                 self._logger.error(' '.join([self._stream_id, self._stream_url, "URL:"+str(stream_url) + ", CODE:"+str(code) + ", MSG:"+str(msg)]))
@@ -206,12 +211,13 @@ class MonitorProcess(multiprocessing.Process):
                 if res_data.get('audio_data') != None:
                     task = (1, res_data.get('audio_data'))
                     self._logger.debug(' '.join([self._stream_id, self._stream_url, ": audio len:" + str(len(res_data.get('audio_data')))]))
-                    self._worker_queue.put(task)
+                    self._worker_queue.put(task, False)
+                    self._logger.debug(' '.join([self._stream_id, self._stream_url, ": queue size:" + str(self._worker_queue.qsize())]))
                 else:
                     self._logger.debug(' '.join([self._stream_id, self._stream_url, str(res_data)]))
                 return 0
             except Exception as e:
-                self._logger.error(str(e))
+                self._logger.error(' '.join([str(self._stream_id), self._stream_url, str(e)]))
         
     class _RecognizeWorker(threading.Thread):
 
@@ -236,6 +242,7 @@ class MonitorProcess(multiprocessing.Process):
             while not self._is_stop:
                 try:
                     task = self._worker_queue.get()
+                    self._worker_queue.task_done()
                     task_type, now_buf = task
                     host = self._stream_info['rec_host']
                     stream_id = self._stream_id
@@ -345,7 +352,7 @@ def parse_config():
         cf = ConfigParser.ConfigParser()
         cf.read('acrcloud_config.ini')
 
-        config = {'api':{}, 'log':{}, 'rec':{}, 'download':{}}
+        config = {'api':{}, 'log':{}, 'rec':{}, 'download':{}, 'device':{}}
 
         config['api']['access_key'] = cf.get('api', 'access_key')
         if not config['api']['access_key']:
@@ -373,6 +380,10 @@ def parse_config():
         config['download']['open_timeout'] = cf.getint('download', 'open_timeout')
         config['download']['read_timeout'] = cf.getint('download', 'read_timeout')
         config['download']['detect_interval'] = cf.getint('download', 'detect_interval')
+
+        if cf.has_section('device'):
+            config['device']['sample_rate'] = cf.getint('device', 'sample_rate')
+            config['device']['channels'] = cf.getint('device', 'channels')
 
         return config
     except Exception, e:
