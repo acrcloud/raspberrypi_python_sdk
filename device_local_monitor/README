@@ -1,0 +1,4 @@
+1. You can add a new stream in your Local project, and this stream URL is "plughw:0,0?cmd_f=alsa".
+2. Download the local monitor tool "https://github.com/acrcloud/raspberrypi_python_sdk/tree/master/device_local_monitor".
+3. Modify the "acrcloud_config.ini" of "device_local_monitor", access_key= <your Local project's access_key>, stream_ids=<the new stream ID>.
+4. Run the tool "python acrcloud_device_monitor.py &".
