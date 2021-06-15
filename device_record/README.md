@@ -10,8 +10,7 @@
    or
    nohup python device_record.py &
 ```
-   Log file: /tmp/drecord.log
-   Audio File will be saved "/tmp/".
+   **Log file: /tmp/drecord.log. Audio File will be saved "/tmp/".** </br>
 2. stop
 ```python
    ps -ef | grep device_record.py | grep -v grep | awk '{print $2}'| xargs kill -9
